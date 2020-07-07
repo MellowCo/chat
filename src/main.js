@@ -7,6 +7,12 @@ import uView from 'uview-ui'
 // http
 import httpInterceptor from './utils/request/interceptor'
 
+// filiters
+import * as filters from './utils/filter/index'
+Vue.filter('timeToNow', function (time) {
+  return filters.timeToNow(time)
+})
+
 Vue.config.productionTip = false
 App.mpType = 'app'
 
