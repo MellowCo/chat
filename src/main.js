@@ -4,9 +4,6 @@ import App from './App'
 // ui
 import uView from 'uview-ui'
 
-// http
-import httpInterceptor from './utils/request/interceptor'
-
 // filiters
 import * as filters from './utils/filter/index'
 Vue.filter('timeToNow', function (time) {
@@ -21,6 +18,3 @@ const app = new Vue({
 })
 app.$mount()
 Vue.use(uView)
-Vue.use(httpInterceptor, app)
-
-export { app }

@@ -6,7 +6,7 @@ const install = (Vue, vm) => {
     dataType: 'json',
     showLoading: true,
     loadingText: '努力加载中~',
-    loadingTime: 800,
+    loadingTime: 400,
     originalData: false,
     loadingMask: true,
     header: {
