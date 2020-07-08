@@ -9,7 +9,13 @@
       v-model="keyWord"
     ></u-search>
 
-    <u-card v-for="item in tweets" :key="item.tweetid" :show-head="false" margin="0" padding="27.8">
+    <u-card
+      v-for="(item,index) in tweets"
+      :key="item.tweetid"
+      :show-head="false"
+      margin="0"
+      padding="27.8"
+    >
       <view slot="body" class="main">
         <view class="avatar">
           <u-image width="68.1rpx" height="68.1rpx" :src="item.avatar" mode="widthFix"></u-image>
@@ -19,10 +25,19 @@
           <view class="container-top">
             <view class="name">{{ item.name }}</view>
             <view class="icons">
-              <u-icon name="thumb-up" color="#454545" size="35"></u-icon>
+              <u-icon
+                name="thumb-up"
+                :color="item.islike ? '#589af1':'#454545'"
+                size="35"
+                @click="like(item.islike,index)"
+              ></u-icon>
               <text style="margin:0 6.9rpx">{{item.like}}</text>
-              <u-icon name="star" color="#454545" size="35"></u-icon>
-              <text style="margin:0 6.9rpx">{{item.collection}}</text>
+              <u-icon
+                name="star"
+                :color="item.isCollection ? '#589af1':'#454545'"
+                size="35"
+                @click="collection(item.isCollection,index)"
+              ></u-icon>
             </view>
           </view>
 
@@ -36,6 +51,7 @@
                 :key="key"
                 style="width:70%;"
                 @click="viewImgs(item.img,key)"
+                lazy-load
               />
             </view>
 
@@ -50,6 +66,7 @@
                 :key="key"
                 style="width:200rpx;padding:2rpx;height:200rpx;"
                 @click="viewImgs(item.img,key)"
+                lazy-load
               />
             </view>
 
@@ -61,6 +78,7 @@
                 :key="key"
                 style="width:200rpx;padding:2rpx;height:200rpx;"
                 @click="viewImgs(item.img,key)"
+                lazy-load
               />
             </view>
 
@@ -71,51 +89,66 @@
 
       <template #foot>
         <view class="container-bottom">
-          <view class="icon-item">
-            <u-icon
-              name="file-text"
-              color="#454545"
-              label="复制文案"
-              label-pos="left"
-              @click="copyText(item.text)"
-            ></u-icon>
-          </view>
-          <view class="icon-item">
-            <u-icon
-              name="download"
-              color="#454545"
-              label="一键保存"
-              label-pos="left"
-              @click="saveImgs(item.img)"
-            ></u-icon>
-          </view>
-          <view class="icon-item">
+          <button class="icon-item" @click="copyText(item.text)">
+            <u-icon name="file-text" color="#454545" label="复制文案" label-pos="left"></u-icon>
+          </button>
+          <button class="icon-item" @click="saveImgs(item.img)">
+            <u-icon name="download" color="#454545" label="一键保存" label-pos="left"></u-icon>
+          </button>
+          <button class="icon-item" open-type="share">
             <u-icon name="share" color="#454545" label="分享" label-pos="left"></u-icon>
-          </view>
+          </button>
         </view>
       </template>
     </u-card>
-
+    <u-loadmore :status="status" :load-text="loadText" />
+    <u-back-top :scroll-top="scrollTop" bottom="100"></u-back-top>
     <u-toast ref="uToast" />
   </view>
 </template>
 
 <script>
 import * as service from './service'
-import { copy } from '../../utils/copy/index'
+import { copy, download, toastLoaing, auth, toastText, showShare } from '../../utils/wxUtils/index'
+import content from '../../utils/dict/content'
+import scope from '../../utils/dict/authScope'
 
 export default {
   data () {
     return {
       images: [],
       tweets: [],
-      keyWord: ''
+      keyWord: '',
+      scrollTop: 0,
+      status: 'loadmore',
+      loadText: {
+        loadmore: '上拉或点击加载更多',
+        loading: '正在加载,请喝杯茶...',
+        nomore: '实在没有了'
+      }
     }
   },
   onLoad () {
     this.getSwipers()
     this.getTweets()
+    showShare()
   },
+  onPageScroll (e) {
+    this.scrollTop = e.scrollTop
+  },
+  // 分享朋友圈
+  onShareAppMessage (OBJECT) {
+    return {
+      title: 'chat-朋友圈',
+      path: 'pages/index/index'
+    }
+  },
+  // 到底加载
+  async onReachBottom () {
+    const { data } = await service.tweets()
+    this.tweets = Object.freeze([...this.tweets, ...data.tweets])
+  },
+  // 下拉刷新
   async onPullDownRefresh () {
     try {
       await this.getSwipers()
@@ -126,15 +159,20 @@ export default {
   },
   methods: {
     async getSwipers () {
-      const data = await service.swipers()
+      const { data } = await service.swipers()
       this.images = Object.freeze(data)
     },
     async getTweets () {
-      const data = await service.tweets()
+      const { data } = await service.tweets()
       this.tweets = Object.freeze(data.tweets)
+      // this.tweets = data.tweets
     },
     search (val) {
-      console.log(val)
+      try {
+        this.getTweets()
+      } finally {
+        this.keyWord = ''
+      }
     },
     // 复制文本
     copyText (text) {
@@ -148,32 +186,37 @@ export default {
       })
     },
     // 保存图片
-    saveImgs (imgs) {
+    async saveImgs (imgs) {
+      // 检查授权
+      await auth(scope.Photos, content.Photos)
+
+      // 多张图片 遍历
       for (let index = 0; index < imgs.length; index++) {
-        const _this = this
-        const { path } = uni.getImageInfo({
-          src: imgs[index]
-        })
-        console.log(path)
+        toastLoaing({ title: `保存第${index + 1}张图片` })
+        const { tempFilePath } = await download(imgs[index])
 
         uni.saveImageToPhotosAlbum({
-          filePath: path,
-          success () {
-            _this.$refs.uToast.show({
-              title: `第${index}张图片保存成功`,
-              type: 'success'
-            })
-          },
-          fail (e) {
-            console.log(e)
-
-            _this.$refs.uToast.show({
-              title: `第${index}张图片保存失败`,
-              type: 'error'
-            })
+          filePath: tempFilePath,
+          fail: e => {
+            toastText(`第${index + 1}张图片保存失败`)
           }
         })
       }
+    },
+    async like (flag, index) {
+      const { success } = await service.like()
+
+      console.log(success)
+
+      if (success) {
+        console.log(111111)
+        this.tweets[index].islike = !flag
+      } else {
+        toastText('点赞失败')
+      }
+    },
+    collection (flag) {
+
     }
   }
 }
@@ -209,7 +252,6 @@ export default {
         }
       }
     }
-
     .container-text {
       margin-top: 13.9rpx;
     }
@@ -222,6 +264,11 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: #ffffff;
+
+    &::after {
+      border: none;
+    }
   }
 }
 </style>
