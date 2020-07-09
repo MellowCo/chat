@@ -11,7 +11,8 @@ export function swipers () {
 // 推文
 export function tweets () {
   return request({
-    url: dict.tweets
+    url: dict.tweets,
+    loading: false
   })
 }
 // 点赞

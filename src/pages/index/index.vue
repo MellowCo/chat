@@ -10,7 +10,7 @@
     ></u-search>
 
     <u-card
-      v-for="(item,index) in tweets"
+      v-for="(item, index) in tweets"
       :key="item.tweetid"
       :show-head="false"
       margin="0"
@@ -27,45 +27,45 @@
             <view class="icons">
               <u-icon
                 name="thumb-up"
-                :color="item.islike ? '#589af1':'#454545'"
+                :color="item.islike ? '#589af1' : '#454545'"
                 size="35"
-                @click="like(item.islike,index)"
+                @click="like(item.islike, index)"
               ></u-icon>
-              <text style="margin:0 6.9rpx">{{item.like}}</text>
+              <text style="margin:0 6.9rpx">{{ item.like }}</text>
               <u-icon
                 name="star"
-                :color="item.isCollection ? '#589af1':'#454545'"
+                :color="item.isCollection ? '#589af1' : '#454545'"
                 size="35"
-                @click="collection(item.isCollection,index)"
+                @click="collection(item.isCollection, index)"
               ></u-icon>
             </view>
           </view>
 
           <view class="container-text">
-            <text>{{item.text}}</text>
+            <text>{{ item.text }}</text>
             <view v-if="item.img.length === 1" style="margin: 13.9rpx 0;display:flex;">
               <image
                 mode="aspectFill"
                 :src="citem"
-                v-for="(citem,key) in item.img"
+                v-for="(citem, key) in item.img"
                 :key="key"
                 style="width:70%;"
-                @click="viewImgs(item.img,key)"
+                @click="viewImgs(item.img, key)"
                 lazy-load
               />
             </view>
 
             <view
-              v-else-if="item.img.length <= 3 && item.img.length >1"
+              v-else-if="item.img.length <= 3 && item.img.length > 1"
               style="margin: 13.9rpx 0;display:flex;"
             >
               <image
                 mode="aspectFill"
                 :src="citem"
-                v-for="(citem,key) in item.img"
+                v-for="(citem, key) in item.img"
                 :key="key"
                 style="width:200rpx;padding:2rpx;height:200rpx;"
-                @click="viewImgs(item.img,key)"
+                @click="viewImgs(item.img, key)"
                 lazy-load
               />
             </view>
@@ -74,15 +74,15 @@
               <image
                 mode="aspectFill"
                 :src="citem"
-                v-for="(citem,key) in item.img"
+                v-for="(citem, key) in item.img"
                 :key="key"
                 style="width:200rpx;padding:2rpx;height:200rpx;"
-                @click="viewImgs(item.img,key)"
+                @click="viewImgs(item.img, key)"
                 lazy-load
               />
             </view>
 
-            <text>{{item.time | timeToNow}}</text>
+            <text>{{ item.time | timeToNow }}</text>
           </view>
         </view>
       </view>
@@ -92,7 +92,7 @@
           <button class="icon-item" @click="copyText(item.text)">
             <u-icon name="file-text" color="#454545" label="复制文案" label-pos="left"></u-icon>
           </button>
-          <button class="icon-item" @click="saveImgs(item.img)">
+          <button class="icon-item" @click="saveImgs(item.img)" :disabled="imgDisable">
             <u-icon name="download" color="#454545" label="一键保存" label-pos="left"></u-icon>
           </button>
           <button class="icon-item" open-type="share">
@@ -109,7 +109,14 @@
 
 <script>
 import * as service from './service'
-import { copy, download, toastLoaing, auth, toastText, showShare } from '../../utils/wxUtils/index'
+import {
+  copy,
+  download,
+  toastLoaing,
+  auth,
+  toastText,
+  showShare
+} from '../../utils/wxUtils/index'
 import content from '../../utils/dict/content'
 import scope from '../../utils/dict/authScope'
 
@@ -125,7 +132,8 @@ export default {
         loadmore: '上拉或点击加载更多',
         loading: '正在加载,请喝杯茶...',
         nomore: '实在没有了'
-      }
+      },
+      imgDisable: false
     }
   },
   onLoad () {
@@ -137,7 +145,7 @@ export default {
     this.scrollTop = e.scrollTop
   },
   // 分享朋友圈
-  onShareAppMessage (OBJECT) {
+  onShareAppMessage () {
     return {
       title: 'chat-朋友圈',
       path: 'pages/index/index'
@@ -145,8 +153,13 @@ export default {
   },
   // 到底加载
   async onReachBottom () {
-    const { data } = await service.tweets()
-    this.tweets = Object.freeze([...this.tweets, ...data.tweets])
+    try {
+      this.status = 'loading'
+      const { data } = await service.tweets()
+      this.tweets = Object.freeze([...this.tweets, ...data.tweets])
+    } finally {
+      this.status = 'loadmore'
+    }
   },
   // 下拉刷新
   async onPullDownRefresh () {
@@ -187,36 +200,59 @@ export default {
     },
     // 保存图片
     async saveImgs (imgs) {
-      // 检查授权
-      await auth(scope.Photos, content.Photos)
+      try {
+        this.imgDisable = true
 
-      // 多张图片 遍历
-      for (let index = 0; index < imgs.length; index++) {
-        toastLoaing({ title: `保存第${index + 1}张图片` })
-        const { tempFilePath } = await download(imgs[index])
+        // 检查授权
+        await auth(scope.Photos, content.Photos)
 
-        uni.saveImageToPhotosAlbum({
-          filePath: tempFilePath,
-          fail: e => {
-            toastText(`第${index + 1}张图片保存失败`)
-          }
-        })
+        // 多张图片 遍历
+        for (let index = 0; index < imgs.length; index++) {
+          toastLoaing({ title: `保存第${index + 1}张图片` })
+
+          const { tempFilePath } = await download(imgs[index])
+
+          uni.saveImageToPhotosAlbum({
+            filePath: tempFilePath,
+            fail: e => {
+              toastText({ title: `第${index + 1}张图片保存失败` })
+            }
+          })
+        }
+      } finally {
+        this.imgDisable = false
       }
     },
+    // 点赞
     async like (flag, index) {
-      const { success } = await service.like()
-
-      console.log(success)
-
-      if (success) {
-        console.log(111111)
-        this.tweets[index].islike = !flag
-      } else {
-        toastText('点赞失败')
+      try {
+        const { success } = await service.like()
+        if (success) {
+          const _tweets = JSON.parse(JSON.stringify(this.tweets))
+          _tweets[index].islike = !flag
+          flag ? _tweets[index].like -= 1 : _tweets[index].like += 1
+          this.tweets = Object.freeze(_tweets)
+        } else {
+          throw new Error()
+        }
+      } catch {
+        toastText({ title: '点赞失败' })
       }
     },
-    collection (flag) {
-
+    // 收藏
+    async   collection (flag, index) {
+      try {
+        const { success } = await service.like()
+        if (success) {
+          const _tweets = JSON.parse(JSON.stringify(this.tweets))
+          _tweets[index].isCollection = !flag
+          this.tweets = Object.freeze(_tweets)
+        } else {
+          throw new Error()
+        }
+      } catch (e) {
+        toastText({ title: '收藏失败' })
+      }
     }
   }
 }

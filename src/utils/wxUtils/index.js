@@ -36,7 +36,7 @@ export function download (url) {
 }
 
 // toast loading
-export function toastLoaing ({ title, time = 1500, isClick = false }) {
+export function toastLoaing ({ title, time = 1500, isClick = true }) {
   uni.showToast({
     title,
     duration: time,
@@ -45,7 +45,7 @@ export function toastLoaing ({ title, time = 1500, isClick = false }) {
   })
 }
 
-export function toastSuccess ({ title, time = 1500, isClick = false }) {
+export function toastSuccess ({ title, time = 1500, isClick = true }) {
   uni.showToast({
     title,
     duration: time,
@@ -53,7 +53,7 @@ export function toastSuccess ({ title, time = 1500, isClick = false }) {
   })
 }
 
-export function toastText ({ title, time = 1500, isClick = false }) {
+export function toastText ({ title, time = 1500, isClick = true }) {
   uni.showToast({
     title,
     duration: time,
