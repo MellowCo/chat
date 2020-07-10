@@ -136,10 +136,17 @@ export default {
       imgDisable: false
     }
   },
-  onLoad () {
-    this.getSwipers()
-    this.getTweets(true)
-    showShare()
+  async onLoad () {
+    try {
+      uni.showLoading({
+        title: '加载中...'
+      })
+      await this.getSwipers(false)
+      await this.getTweets(false)
+      showShare()
+    } finally {
+      uni.hideLoading()
+    }
   },
   onPageScroll (e) {
     this.scrollTop = e.scrollTop
@@ -164,18 +171,18 @@ export default {
   // 下拉刷新
   async onPullDownRefresh () {
     try {
-      await this.getTweets(true)
+      await this.getTweets()
       await this.getSwipers()
     } finally {
       uni.stopPullDownRefresh()
     }
   },
   methods: {
-    async getSwipers () {
-      const { data } = await service.swipers()
+    async getSwipers (loading = true) {
+      const { data } = await service.swipers(loading)
       this.images = Object.freeze(data)
     },
-    async getTweets (loading) {
+    async getTweets (loading = true) {
       const { data } = await service.tweets(loading)
       this.tweets = Object.freeze(data.tweets)
       // this.tweets = data.tweets

@@ -5,7 +5,7 @@
       "style": {
         "navigationBarTitleText": "朋友圈",
         "enablePullDownRefresh": true,
-        "onReachBottomDistance": 60
+        "onReachBottomDistance": 100
       }
     },
     {
@@ -66,6 +66,10 @@
       {
         "name": "img",
         "path": "pages/settings/views/sendImg"
+      },
+      {
+        "name": "video",
+        "path": "pages/settings/views/sendVideo"
       }
     ]
   }

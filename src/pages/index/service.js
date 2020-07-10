@@ -2,9 +2,10 @@ import request from '../../utils/request/request'
 import dict from '../../utils/dict/index'
 
 // 轮播图
-export function swipers () {
+export function swipers (loading) {
   return request({
-    url: dict.swipers
+    url: dict.swipers,
+    loading
   })
 }
 

@@ -135,3 +135,17 @@ export function chooseImg () {
     })
   })
 }
+
+// 选择视频
+export function chooseVideo () {
+  return new Promise((resolve, reject) => {
+    uni.chooseVideo({
+      success: res => {
+        resolve(res)
+      },
+      fail: res => {
+        reject(res)
+      }
+    })
+  })
+}

@@ -127,10 +127,6 @@ export default {
       font-size: 41.67rpx;
       margin: 13.89rpx 0;
     }
-
-    /deep/.u-btn--primary {
-      background-color: #589af1;
-    }
   }
 }
 </style>
