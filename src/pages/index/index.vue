@@ -138,7 +138,7 @@ export default {
   },
   onLoad () {
     this.getSwipers()
-    this.getTweets()
+    this.getTweets(true)
     showShare()
   },
   onPageScroll (e) {
@@ -155,7 +155,7 @@ export default {
   async onReachBottom () {
     try {
       this.status = 'loading'
-      const { data } = await service.tweets()
+      const { data } = await service.tweets(false)
       this.tweets = Object.freeze([...this.tweets, ...data.tweets])
     } finally {
       this.status = 'loadmore'
@@ -164,8 +164,8 @@ export default {
   // 下拉刷新
   async onPullDownRefresh () {
     try {
+      await this.getTweets(true)
       await this.getSwipers()
-      await this.getTweets()
     } finally {
       uni.stopPullDownRefresh()
     }
@@ -175,8 +175,8 @@ export default {
       const { data } = await service.swipers()
       this.images = Object.freeze(data)
     },
-    async getTweets () {
-      const { data } = await service.tweets()
+    async getTweets (loading) {
+      const { data } = await service.tweets(loading)
       this.tweets = Object.freeze(data.tweets)
       // this.tweets = data.tweets
     },

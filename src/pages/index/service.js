@@ -9,10 +9,10 @@ export function swipers () {
 }
 
 // 推文
-export function tweets () {
+export function tweets (loading) {
   return request({
     url: dict.tweets,
-    loading: false
+    loading
   })
 }
 // 点赞
