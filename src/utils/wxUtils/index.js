@@ -1,4 +1,6 @@
 // 复制剪切板
+import dict from '../dict/index'
+
 export function copy (text) {
   uni.setClipboardData({
     data: text,
@@ -78,11 +80,9 @@ export function auth (scope, content = '内容', title = '是否打开设置页�
             if (res.confirm) {
               uni.openSetting({
                 success: res => {
-                  console.log('success', res)
                 },
                 fail: res => {
                   reject(res)
-                  console.log('fail', res)
                 }
               })
             } else {
@@ -100,5 +100,38 @@ export function showShare () {
   uni.showShareMenu({
     withShareTicket: true,
     menus: ['shareAppMessage', 'shareTimeline']
+  })
+}
+
+export function login () {
+  return new Promise((resolve, reject) => {
+    uni.login({
+      provider: 'weixin',
+      success: res => {
+        resolve(res)
+      },
+      fail: res => {
+        reject(res)
+      }
+    })
+  })
+}
+//
+export function isLogin () {
+  const _isLogin = uni.getStorageSync(dict.isLogin)
+  return _isLogin !== 1
+}
+
+// 选择图片
+export function chooseImg () {
+  return new Promise((resolve, reject) => {
+    uni.chooseImage({
+      success: res => {
+        resolve(res)
+      },
+      fail: res => {
+        reject(res)
+      }
+    })
   })
 }
